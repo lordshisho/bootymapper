@@ -34,14 +34,13 @@ struct config {
 
 	struct stats_st {
 		int found;
-		int init_connected_hosts;	// Number of hosts we have even tried to connect to
-		int connected_hosts;		// # hosts that picked up
-		int conn_timed_out;			// # hosts that timed out during connection
-		int read_timed_out;			// # hosts that connected, but sent no data (banner)
-		int timed_out;				// # hosts that timed out at all (conn_timed_out+read_timed_out)?
-		int completed_hosts;		// # hosts that presented a banner
-	} stats;
-};
+		int init_connected_hosts;
+		int connected_hosts;
+		int conn_timed_out;
+		int read_timed_out;
+		int timed_out;
+		int completed_hosts;
+	};
 
 
 struct state {
@@ -262,10 +261,10 @@ int main(int argc, char *argv[])
 
 	log_init(stderr, LOG_INFO);
 
-	ret = ulimit(4, 1000000);	// Allow us to open 1 million fds (instead of 1024)
+	ret = ulimit(conf.max_concurrent);
 
 	if (ret < 0) {
-		log_fatal("bootymapper", "cannot set ulimit");
+		log_fatal("bootymapper", "Could not set ulimit");
 		perror("ulimit");
 		exit(1);
 	}
@@ -273,16 +272,13 @@ int main(int argc, char *argv[])
 	base = event_base_new();
 	conf.base = base;
 
-	// buffer stdin as an event
 	conf.stdin_bev = bufferevent_socket_new(base, 0, BEV_OPT_DEFER_CALLBACKS);
 	bufferevent_setcb(conf.stdin_bev, stdin_readcb, NULL, stdin_eventcb, &conf);
 	bufferevent_enable(conf.stdin_bev, EV_READ);
 
-	// Status timer
 	status_timer = evtimer_new(base, print_status, &conf);
 	evtimer_add(status_timer, &status_timeout);
 
-	// Defaults
 	conf.max_read_size = 16777216;
 	conf.max_concurrent = 1000000;
 	conf.current_running = 0;
@@ -292,7 +288,6 @@ int main(int argc, char *argv[])
 	conf.stdin_closed = 0;
 	conf.send_str = NULL;
 
-	// Parse command line args
 	while (1) {
 		int option_index = 0;
 		c = getopt_long(argc, argv, "c:p:t:r:v:d:s:f:m:",

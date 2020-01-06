@@ -10,7 +10,7 @@ Solution used to grab banners from TCP services and search their contents for a 
 
 `-r` sets the timeout for a connection that has completed a TCP handshake but has not sent any data.
 
-`-v` increases the verbosity level of bootmapper. Any informative messages are not printed to stdout.
+`-v` increases the verbosity level of bootymapper. Any informative messages are not printed to stdout.
 
 `-d` sets the data file that bootymapper will send. A basic HTTP request is included in `request`.
 
@@ -18,7 +18,7 @@ Solution used to grab banners from TCP services and search their contents for a 
 
 `-f` allows you to set if the output is only the resulting IP or the IP and the contents of the response.
 
-bootmapper is a solution used to grab banners from TCP services and search their contents for a specific string.
+bootymapper is a solution used to grab banners from TCP services and search their contents for a specific string.
 
 To install dependencies with apt use `apt-get install libevent-dev` and to compile bootymapper use `cd bootymapper && make`. You may need to update libevent from source to the latest version. You can find the latest libevent on https://github.com/libevent/libevent
 

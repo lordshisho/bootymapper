@@ -40,7 +40,8 @@ struct config {
 		int read_timed_out;
 		int timed_out;
 		int completed_hosts;
-	};
+	} stats;
+};
 
 
 struct state {
@@ -261,7 +262,7 @@ int main(int argc, char *argv[])
 
 	log_init(stderr, LOG_INFO);
 
-	ret = ulimit(conf.max_concurrent);
+	ret = ulimit(4, 1000000);
 
 	if (ret < 0) {
 		log_fatal("bootymapper", "Could not set ulimit");

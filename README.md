@@ -18,8 +18,6 @@ Solution used to grab banners from TCP services and search their contents for a 
 
 `-f` allows you to set if the output is only the resulting IP or the IP and the contents of the response.
 
-bootymapper is a solution used to grab banners from TCP services and search their contents for a specific string.
-
 To install dependencies with apt use `apt-get install libevent-dev` and to compile bootymapper use `cd bootymapper && make`. You may need to update libevent from source to the latest version. You can find the latest libevent on https://github.com/libevent/libevent
 
 IPv4 addresses can be generated with zmap or your preferred network mapper and piped directly into `bootymapper`.

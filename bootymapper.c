@@ -78,8 +78,8 @@ void decrement_cur_running(struct state *st) {
 	free(st);
 
 	if (conf->stdin_closed && conf->current_running == 0) {
-		log_info("bootymapper", "Scan completed.");
 		print_status(0, 0, conf);
+		log_info("bootymapper", "Scan completed.");
 		exit(0);
 	}
 

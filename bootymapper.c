@@ -346,7 +346,7 @@ int main(int argc, char *argv[])
 			}
 			break;
 		case 'm':
-			conf.max_read_size = atoi(optarg);
+			conf.max_read_size = atoi(optarg) * 1048576;
 			break;
 		case '?':
 			printf("Usage: %s [-c max_concurrent_sockets] [-t connection_timeout] [-r read_timeout] "

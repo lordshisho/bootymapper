@@ -1,5 +1,5 @@
 CFLAGS+=-I../../lib/ -Wall
-LDFLAGS+=-lpcap -levent -levent_extra -levent_core -lm
+LDFLAGS+= -levent -lm
 VPATH=/../../lib/
 
 # from dpkg-buildflags --get CFLAGS, but use stack-protector-all and fPIC

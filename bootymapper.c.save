@@ -55,9 +55,8 @@ void print_status(evutil_socket_t fd, short events, void *arg) {
 	evtimer_add(ev, &status_timeout);
 	(void)fd; (void)events;
 
-	log_info("bootymapper", "(%d/%d descriptors in use) - %d found containing \"%s\", %d inititiated, %d connected, %d received data",
-			conf->current_running, conf->max_concurrent, conf->stats.found, conf->search_string,
-			conf->stats.init_connected_hosts, conf->stats.connected_hosts, conf->stats.completed_hosts);
+	log_info("bootymapper", "(%d/%d in use) - %d found containing \"%s\", %d inititiated, %d connected, %d no connection, %d no data, %d received data",
+			conf->current_running, conf->max_concurrent, conf->stats.found, conf->search_string, conf->stats.init_connected_hosts, conf->stats.connected_hosts, conf->stats.completed_hosts);
 }
 
 void decrement_cur_running(struct state *st) {
@@ -124,7 +123,7 @@ void read_cb(struct bufferevent *bev, void *arg) {
 		st->state = RECEIVED;
 
 		if (!buf) {
-			log_fatal("bootymapper", "Cannot allocate buffer of length %d for received data", len+1);
+			log_fatal("bootymapper", "cannot alloc %d byte buf", len+1);
 			return;
 		}
 
@@ -182,7 +181,7 @@ void grab_banner(struct state *st)
 
 	if (bufferevent_socket_connect(bev,
 		(struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		log_warn("bootymapper", "Could not connect on socket %d (%d are open) %d %d",
+		log_warn("bootymapper", "could not connect socket %d (%d open) %d %d",
 			bufferevent_getfd(bev), st->conf->current_running, errno, ENFILE);
 		perror("connect");
 
@@ -199,11 +198,11 @@ void stdin_eventcb(struct bufferevent *bev, short events, void *ptr) {
 	if (events & BEV_EVENT_EOF) {
 		conf->stdin_closed = 1;
 		if (conf->current_running == 0) {
-			log_info("bootymapper", "Scan terminated.");
+			log_info("bootymapper", "done");
 			print_status(0, 0, conf);
 			exit(0);
 		}
-	}
+	} 
 }
 
 void stdin_readcb(struct bufferevent *bev, void *arg)
@@ -257,7 +256,7 @@ int main(int argc, char *argv[])
 	ret = ulimit(4, 1000000);
 
 	if (ret < 0) {
-		log_fatal("bootymapper", "Could not set ulimit.");
+		log_fatal("bootymapper", "Could not set ulimit");
 		perror("ulimit");
 		exit(1);
 	}
@@ -311,7 +310,7 @@ int main(int argc, char *argv[])
 		case 'd':
 			fp = fopen(optarg, "r");
 			if (!fp) {
-				log_error("bootymapper", "Could not open request data file '%s':", optarg);
+				log_error("bootymapper", "Could not open send data file '%s':", optarg);
 				perror("fopen");
 				exit(-1);
 			}
@@ -320,10 +319,10 @@ int main(int argc, char *argv[])
 			fseek(fp, 0L, SEEK_SET);
 			conf.send_str = malloc(conf.send_str_size+1);
 			if (!conf.send_str) {
-				log_fatal("bootymapper", "Could not allocate buffer of length %d to fit request data.", conf.send_str_size+1);
+				log_fatal("bootymapper", "Could not malloc %d bytes", conf.send_str_size+1);
 			}
 			if (fread(conf.send_str, conf.send_str_size, 1, fp) != 1) {
-				log_fatal("bootymapper", "Could not read from send data file '%s':", optarg);
+				log_fatal("bootymapper", "Couldn't read from send data file '%s':", optarg);
 			}
 			conf.send_str[conf.send_str_size] = '\0';
 			fclose(fp);
@@ -349,8 +348,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	log_info("bootymapper", "Scanning port %d, %d max descriptors, %d second connection timeout, %d second read timeout, %d bytes max receive size",
-			conf.port, conf.max_concurrent, conf.connect_timeout, conf.read_timeout, conf.max_read_size);
+	log_info("bootymapper", "Using port %d with max_concurrency %d, %d s conn timeout, %d s read timeout",
+			conf.port, conf.max_concurrent, conf.connect_timeout, conf.read_timeout);
 
 	event_base_dispatch(base);
 

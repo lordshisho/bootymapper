@@ -337,7 +337,7 @@ int main(int argc, char *argv[])
 			fclose(fp);
 			break;
 		case 's':
-			conf.search_string = malloc(strlen(optarg));
+			conf.search_string = malloc(strlen(optarg) + 1);
 			strcpy(conf.search_string, optarg);
 			break;
 		case 'f':

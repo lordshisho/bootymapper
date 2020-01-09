@@ -21,6 +21,7 @@ struct config {
 	struct bufferevent *stdin_bev;
 	int stdin_closed;
 	char *search_string;
+	int search;
 	int max_read_size;
 	int format;
 	char *send_str;
@@ -130,7 +131,7 @@ void read_cb(struct bufferevent *bev, void *arg) {
 
 		evbuffer_remove(in, buf, len);
 
-		if(st->conf->search_string != NULL && strstr(buf, st->conf->search_string) != NULL) {
+		if(st->conf->search == 1 && strstr(buf, st->conf->search_string) != NULL) {
 			if(st->conf->format == 1) {
 				printf("%s\n", inet_ntoa(addr));
 			} else {
@@ -139,7 +140,7 @@ void read_cb(struct bufferevent *bev, void *arg) {
 				printf("%s\n", buf);
 			}
 			st->conf->stats.found++;
-		} else if(st->conf->search_string == NULL) {
+		} else if(st->conf->search == 0) {
 			if(st->conf->format == 1) {
                                 printf("%s\n", inet_ntoa(addr));
                         } else {
@@ -272,6 +273,8 @@ int main(int argc, char *argv[])
 	status_timer = evtimer_new(base, print_status, &conf);
 	evtimer_add(status_timer, &status_timeout);
 
+	conf.search = 0;
+	conf.search_string = NULL;
 	conf.max_read_size = 16777216;
 	conf.max_concurrent = 1000000;
 	conf.current_running = 0;
@@ -329,6 +332,7 @@ int main(int argc, char *argv[])
 			fclose(fp);
 			break;
 		case 's':
+			conf.search = 1;
 			conf.search_string = malloc(strlen(optarg) + 1);
 			strcpy(conf.search_string, optarg);
 			break;

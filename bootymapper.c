@@ -30,7 +30,6 @@ struct config {
 		int found;
 		int init_connected_hosts;
 		int connected_hosts;
-		int timed_out;
 		int completed_hosts;
 	} stats;
 };
@@ -185,7 +184,6 @@ void grab_banner(struct state *st)
 			bufferevent_getfd(bev), st->conf->current_running, errno, ENFILE);
 		perror("connect");
 
-
 		bufferevent_free(bev);
 		decrement_cur_running(st);
 	}
@@ -204,8 +202,7 @@ void stdin_eventcb(struct bufferevent *bev, short events, void *ptr) {
 	}
 }
 
-void stdin_readcb(struct bufferevent *bev, void *arg)
-{
+void stdin_readcb(struct bufferevent *bev, void *arg) {
 	struct evbuffer *in = bufferevent_get_input(bev);
 	struct config *conf = arg;
 
@@ -215,8 +212,9 @@ void stdin_readcb(struct bufferevent *bev, void *arg)
 		size_t line_len;
 		char *line = evbuffer_readln(in, &line_len, EVBUFFER_EOL_LF);
 		struct state *st;
-		if (!line)
+		if (!line) {
 			break;
+		}
 
 		ip_str = line;
 
@@ -228,8 +226,7 @@ void stdin_readcb(struct bufferevent *bev, void *arg)
 	}
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	struct event_base *base;
 	struct event *status_timer;
 	struct timeval status_timeout = {1, 0};
@@ -345,7 +342,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	log_info("bootymapper", "Scanning port %d, %d max descriptors, %d second connection timeout, %d second read timeout, %d bytes max receive size",
+	log_info("bootymapper", "Scanning port %d, %d max descriptors, %d second connection timeout, %d second read timeout",
 			conf.port, conf.max_concurrent, conf.connect_timeout, conf.read_timeout);
 
 	event_base_dispatch(base);

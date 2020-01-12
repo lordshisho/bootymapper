@@ -54,9 +54,16 @@ void print_status(evutil_socket_t fd, short events, void *arg) {
 	evtimer_add(ev, &status_timeout);
 	(void)fd; (void)events;
 
-	log_info("bootymapper", "(%d/%d descriptors in use) - %d found containing \"%s\", %d inititiated, %d connected, %d received data",
+
+	if(conf->search == 1) {
+	log_info("bootymapper", "(%d/%d descriptors in use) - %d found containing \"%s\", %d inititiated, %d connected, %d completed",
 			conf->current_running, conf->max_concurrent, conf->stats.found, conf->search_string,
 			conf->stats.init_connected_hosts, conf->stats.connected_hosts, conf->stats.completed_hosts);
+	} else {
+	log_info("bootymapper", "(%d/%d descriptors in use) - %d inititiated, %d connected, %d completed",
+                        conf->current_running, conf->max_concurrent, conf->stats.init_connected_hosts,
+			conf->stats.connected_hosts, conf->stats.completed_hosts);
+	}
 }
 
 void decrement_cur_running(struct state *st) {
@@ -118,10 +125,9 @@ void connect_cb(struct bufferevent *bev, short events, void *arg) {
                                 	printf("%s ", inet_ntoa(addr));
                         	        printf("%s\n", st->response);
                 	        }
-				st->conf->stats.found++;
 			}
 		}
-
+		st->conf->stats.completed_hosts++;
 		bufferevent_free(bev);
 		decrement_cur_running(st);
 	}

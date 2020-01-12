@@ -2,7 +2,7 @@
 
 Solution used to grab banners from TCP services and search their contents for a specific string.
 
-`Usage: ./bootymapper [-c max_concurrent_sockets] [-t connection_timeout] [-r read_timeout] [-v verbosity=0-5] [-d send_data] [-s "search_string"] [-f ip_only] -m [max_read_size] -p port`
+`Usage: ./bootymapper [-c max_concurrent_sockets] [-t connection_timeout] [-r read_timeout] [-v verbosity=0-5] [-d send_data] [-s "search_string"] [-f ip_only] -p port`
 
 `-c` sets the maximum number of concurrent sockets that can be active at any one time. You should use `ulimit -n 1000000` to raise the kernel limit to one million file descriptors. The default is one million.
 

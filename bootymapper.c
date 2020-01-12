@@ -78,7 +78,6 @@ void decrement_cur_running(struct state *st) {
 		log_info("bootymapper", "Scan completed.");
 		exit(0);
 	}
-
 }
 
 void connect_cb(struct bufferevent *bev, short events, void *arg) {
@@ -156,8 +155,7 @@ void read_cb(struct bufferevent *bev, void *arg) {
 	}
 }
 
-void grab_banner(struct state *st)
-{
+void grab_banner(struct state *st) {
 	struct sockaddr_in addr;
 	struct bufferevent *bev;
 	struct timeval read_to = {st->conf->connect_timeout, 0};
@@ -349,4 +347,3 @@ int main(int argc, char *argv[]) {
 
 	return 0;
 }
-

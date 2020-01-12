@@ -13,9 +13,9 @@
 
 struct config {
 	uint16_t port;
+	int current_running;
 	int connect_timeout;
 	int read_timeout;
-	int current_running;
 	int max_concurrent;
 	struct event_base *base;
 	struct bufferevent *stdin_bev;
@@ -31,8 +31,6 @@ struct config {
 		int found;
 		int init_connected_hosts;
 		int connected_hosts;
-		int conn_timed_out;
-		int read_timed_out;
 		int timed_out;
 		int completed_hosts;
 	} stats;
@@ -42,6 +40,8 @@ struct config {
 struct state {
 	struct config *conf;
 	uint32_t ip;
+	char *response;
+	int response_length;
 	enum {CONNECTING, CONNECTED, RECEIVED} state;
 };
 
@@ -68,6 +68,11 @@ void decrement_cur_running(struct state *st) {
 	if (evbuffer_get_length(bufferevent_get_input(conf->stdin_bev)) > 0) {
 		stdin_readcb(conf->stdin_bev, conf);
 	}
+
+	if(st->response != NULL) {
+		free(st->response);
+	}
+
 	free(st);
 
 	if (conf->stdin_closed && conf->current_running == 0) {
@@ -98,14 +103,30 @@ void connect_cb(struct bufferevent *bev, short events, void *arg) {
 		st->state = CONNECTED;
 		st->conf->stats.connected_hosts++;
 	} else {
-		if (st->state == CONNECTED) {
-			st->conf->stats.read_timed_out++;
-		} else {
-			st->conf->stats.conn_timed_out++;
+		if(st->response != NULL) {
+
+			st->response[st->response_length] = '\0';
+
+			if(st->conf->search == 1 && strstr(st->response, st->conf->search_string) != NULL) {
+				if(st->conf->format == 1) {
+					printf("%s\n", inet_ntoa(addr));
+				} else {
+					printf("%s ", inet_ntoa(addr));
+					printf("%s\n", st->response);
+				}
+				st->conf->stats.found++;
+			} else if(st->conf->search == 0) {
+				if(st->conf->format == 1) {
+                                	printf("%s\n", inet_ntoa(addr));
+				} else {
+                                	printf("%s ", inet_ntoa(addr));
+                        	        printf("%s\n", st->response);
+                	        }
+				st->conf->stats.found++;
+			}
 		}
 
 		bufferevent_free(bev);
-		st->conf->stats.timed_out++;
 		decrement_cur_running(st);
 	}
 }
@@ -115,8 +136,6 @@ void read_cb(struct bufferevent *bev, void *arg) {
 	struct state *st = arg;
 	evbuffer_set_max_read(in, st->conf->max_read_size);
 	size_t len = evbuffer_get_length(in);
-	struct in_addr addr;
-	addr.s_addr = st->ip;
 
 	if (len > 0) {
 
@@ -130,34 +149,17 @@ void read_cb(struct bufferevent *bev, void *arg) {
 		}
 
 		evbuffer_remove(in, buf, len);
-
-		if(st->conf->search == 1 && strstr(buf, st->conf->search_string) != NULL) {
-			if(st->conf->format == 1) {
-				printf("%s\n", inet_ntoa(addr));
-			} else {
-				printf("%s ", inet_ntoa(addr));
-				buf[len] = '\0';
-				printf("%s\n", buf);
-			}
-			st->conf->stats.found++;
-		} else if(st->conf->search == 0) {
-			if(st->conf->format == 1) {
-                                printf("%s\n", inet_ntoa(addr));
-                        } else {
-                                printf("%s ", inet_ntoa(addr));
-                                buf[len] = '\0';
-                                printf("%s\n", buf);
-                        }
-			st->conf->stats.found++;
+		char *ptr;
+		ptr = realloc(st->response, st->response_length+len+1);
+		if(ptr == NULL) {
+			log_fatal("bootymapper", "FAILED TO REALLOC\n");
 		}
-
+		st->response = ptr;
+		memcpy(st->response + st->response_length, buf, len);
+		st->response_length += len;
 		fflush(stdout);
-
 		free(buf);
-		st->conf->stats.completed_hosts++;
 	}
-	bufferevent_free(bev);
-	decrement_cur_running(st);
 }
 
 void grab_banner(struct state *st)
@@ -176,7 +178,8 @@ void grab_banner(struct state *st)
 
 	bufferevent_setcb(bev, read_cb, NULL, connect_cb, st);
 	bufferevent_enable(bev, EV_READ);
-
+	st->response = NULL;
+	st->response_length = 0;
 	st->state = CONNECTING;
 
 	st->conf->stats.init_connected_hosts++;
@@ -190,7 +193,6 @@ void grab_banner(struct state *st)
 
 		bufferevent_free(bev);
 		decrement_cur_running(st);
-		return;
 	}
 }
 

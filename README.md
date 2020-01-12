@@ -18,9 +18,9 @@ Solution used to grab banners from TCP services and search their contents for a 
 
 `-f` allows you to set if the output is only the resulting IP or the IP and the contents of the response. The default is to print IP and contents.
 
-`-m` sets the maximum read size of the response in megabytes. The default is 16 megabytes.
+You may need to update libevent from source to update it to the latest version. You can find the latest libevent on https://github.com/libevent/libevent
 
-To install dependencies with apt use `apt-get install libevent-dev` and to compile bootymapper use `cd bootymapper && make`. You may need to update libevent from source to the latest version. You can find the latest libevent on https://github.com/libevent/libevent
+Use `cd bootymapper && make` to compile.
 
 IPv4 addresses can be generated with zmap or your preferred network mapper and piped directly into `bootymapper`.
 

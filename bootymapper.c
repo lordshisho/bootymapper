@@ -22,7 +22,6 @@ struct config {
 	int stdin_closed;
 	char *search_string;
 	int search;
-	int max_read_size;
 	int format;
 	char *send_str;
 	long send_str_size;
@@ -42,7 +41,7 @@ struct state {
 	uint32_t ip;
 	char *response;
 	int response_length;
-	enum {CONNECTING, CONNECTED, RECEIVED} state;
+	enum {CONNECTING, CONNECTED} state;
 };
 
 void stdin_readcb(struct bufferevent *bev, void *arg);
@@ -93,7 +92,6 @@ void connect_cb(struct bufferevent *bev, short events, void *arg) {
 
 		if (conf->send_str) {
 			struct evbuffer *evout = bufferevent_get_output(bev);
-			evbuffer_set_max_read(evout, conf->max_read_size);
 			evbuffer_add_printf(evout, conf->send_str,
 					inet_ntoa(addr), inet_ntoa(addr), inet_ntoa(addr), inet_ntoa(addr));
 		}
@@ -134,14 +132,11 @@ void connect_cb(struct bufferevent *bev, short events, void *arg) {
 void read_cb(struct bufferevent *bev, void *arg) {
 	struct evbuffer *in = bufferevent_get_input(bev);
 	struct state *st = arg;
-	evbuffer_set_max_read(in, st->conf->max_read_size);
 	size_t len = evbuffer_get_length(in);
 
 	if (len > 0) {
 
 		char *buf = malloc(len+1);
-
-		st->state = RECEIVED;
 
 		if (!buf) {
 			log_fatal("bootymapper", "Cannot allocate buffer of length %d for received data", len+1);
@@ -152,7 +147,7 @@ void read_cb(struct bufferevent *bev, void *arg) {
 		char *ptr;
 		ptr = realloc(st->response, st->response_length+len+1);
 		if(ptr == NULL) {
-			log_fatal("bootymapper", "FAILED TO REALLOC\n");
+			log_fatal("bootymapper", "Failed to reallocate buffer. You probably need more memory");
 		}
 		st->response = ptr;
 		memcpy(st->response + st->response_length, buf, len);
@@ -213,7 +208,6 @@ void stdin_readcb(struct bufferevent *bev, void *arg)
 {
 	struct evbuffer *in = bufferevent_get_input(bev);
 	struct config *conf = arg;
-	evbuffer_set_max_read(in, conf->max_read_size);
 
 	while (conf->current_running < conf->max_concurrent &&
 		   evbuffer_get_length(in) > 0) {
@@ -277,8 +271,7 @@ int main(int argc, char *argv[])
 
 	conf.search = 0;
 	conf.search_string = NULL;
-	conf.max_read_size = 16777216;
-	conf.max_concurrent = 1000000;
+	conf.max_concurrent = 10000;
 	conf.current_running = 0;
 	memset(&conf.stats, 0, sizeof(conf.stats));
 	conf.connect_timeout = 5;
@@ -343,12 +336,9 @@ int main(int argc, char *argv[])
 			conf.format = 1;
 			}
 			break;
-		case 'm':
-			conf.max_read_size = atoi(optarg) * 1048576;
-			break;
 		case '?':
 			printf("Usage: %s [-c max_concurrent_sockets] [-t connection_timeout] [-r read_timeout] "
-				   "[-v verbosity=0-5] [-d send_data] [-s \"search_string\"] [-f ip_only] -m [max_read_size] -p port\n", argv[0]);
+				   "[-v verbosity=0-5] [-d send_data] [-s \"search_string\"] [-f ip_only] -p port\n", argv[0]);
 			exit(1);
 		default:
 			break;
@@ -356,7 +346,7 @@ int main(int argc, char *argv[])
 	}
 
 	log_info("bootymapper", "Scanning port %d, %d max descriptors, %d second connection timeout, %d second read timeout, %d bytes max receive size",
-			conf.port, conf.max_concurrent, conf.connect_timeout, conf.read_timeout, conf.max_read_size);
+			conf.port, conf.max_concurrent, conf.connect_timeout, conf.read_timeout);
 
 	event_base_dispatch(base);
 

@@ -271,6 +271,7 @@ int main(int argc, char *argv[]) {
 	status_timer = evtimer_new(base, print_status, &conf);
 	evtimer_add(status_timer, &status_timeout);
 
+	conf.max_read_size = 1048576;
 	conf.search = 0;
 	conf.search_string = NULL;
 	conf.max_concurrent = 10000;
@@ -338,9 +339,12 @@ int main(int argc, char *argv[]) {
 			conf.format = 1;
 			}
 			break;
+		case 'm':
+			conf.max_read_size = atoi(optarg);
+			break;
 		case '?':
 			printf("Usage: %s [-c max_concurrent_sockets] [-t connection_timeout] [-r read_timeout] "
-				   "[-v verbosity=0-5] [-d send_data] [-s \"search_string\"] [-f ip_only] -p port\n", argv[0]);
+				   "[-v verbosity=0-5] [-d send_data] [-s \"search_string\"] [-f ip_only] -m max_read_size -p port\n", argv[0]);
 			exit(1);
 		default:
 			break;

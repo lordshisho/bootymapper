@@ -67,6 +67,7 @@ void print_status(evutil_socket_t fd, short events, void *arg) {
 }
 
 void decrement_cur_running(struct state *st) {
+	log_info("debug", "In decrement function");
 	struct config *conf = st->conf;
 	conf->current_running--;
 
@@ -88,6 +89,7 @@ void decrement_cur_running(struct state *st) {
 }
 
 void connect_cb(struct bufferevent *bev, short events, void *arg) {
+	log_info("debug", "In event callback");
 	struct state *st = arg;
 	struct config *conf = st->conf;
 	struct in_addr addr;
@@ -134,6 +136,7 @@ void connect_cb(struct bufferevent *bev, short events, void *arg) {
 }
 
 void read_cb(struct bufferevent *bev, void *arg) {
+	log_info("debug", "In read callback");
 	struct evbuffer *in = bufferevent_get_input(bev);
 	struct state *st = arg;
 	size_t len = evbuffer_get_length(in);
@@ -162,6 +165,7 @@ void read_cb(struct bufferevent *bev, void *arg) {
 }
 
 void grab_banner(struct state *st) {
+	log_info("debug", "In grab_banner function");
 	struct sockaddr_in addr;
 	struct bufferevent *bev;
 	struct timeval read_to = {st->conf->connect_timeout, 0};
@@ -224,6 +228,7 @@ void stdin_readcb(struct bufferevent *bev, void *arg) {
 		st->response = NULL;
         	st->response_length = 0;
 		st->ip = inet_addr(ip_str);
+		free(line);
 		grab_banner(st);
 	}
 }

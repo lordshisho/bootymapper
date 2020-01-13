@@ -69,17 +69,18 @@ void print_status(evutil_socket_t fd, short events, void *arg) {
 
 void decrement_running(struct state *st) {
 	struct config *conf = st->conf;
+
+	if(st->response != NULL) {
+                free(st->response);
+        }
+
+	free(st);
+
 	conf->current_running--;
 
 	if (evbuffer_get_length(bufferevent_get_input(conf->stdin_bev)) > 0) {
 		stdin_read_callback(conf->stdin_bev, conf);
 	}
-
-	if(st->response != NULL) {
-		free(st->response);
-	}
-
-	free(st);
 
 	if (conf->stdin_closed && conf->current_running == 0) {
 		print_status(0, 0, conf);
@@ -173,7 +174,7 @@ void read_callback(struct bufferevent *bev, void *arg) {
 			return;
 		}
 
-		char *ptr;
+		char *ptr = NULL;
 		ptr = realloc(st->response, st->response_length+len+1);
 		if(ptr == NULL) {
 			log_fatal("bootymapper", "Failed to reallocate buffer. You probably need more memory");
@@ -208,7 +209,7 @@ void grab_banner(struct state *st) {
 
 	if (bufferevent_socket_connect(bev, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 		log_warn("bootymapper", "Could not connect on socket %d (%d are already open). Did you try setting ulimit?",
-			bufferevent_getfd(bev), st->conf->current_running);
+			st->conf->current_running+1, st->conf->current_running);
 		perror("connect");
 
 		bufferevent_free(bev);

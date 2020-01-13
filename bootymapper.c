@@ -207,8 +207,8 @@ void grab_banner(struct state *st) {
 	st->conf->stats.init_connected_hosts++;
 
 	if (bufferevent_socket_connect(bev, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		log_warn("bootymapper", "Could not connect on socket %d (%d are open) %d %d",
-			bufferevent_getfd(bev), st->conf->current_running, errno, ENFILE);
+		log_warn("bootymapper", "Could not connect on socket %d (%d are already open). Did you try setting ulimit?",
+			bufferevent_getfd(bev), st->conf->current_running);
 		perror("connect");
 
 		bufferevent_free(bev);

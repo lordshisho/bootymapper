@@ -98,8 +98,7 @@ void event_callback(struct bufferevent *bev, short events, void *arg) {
 
 		if (conf->send_str) {
 			struct evbuffer *evout = bufferevent_get_output(bev);
-			evbuffer_add_printf(evout, conf->send_str,
-					inet_ntoa(addr), inet_ntoa(addr), inet_ntoa(addr), inet_ntoa(addr));
+			evbuffer_add_printf(evout, conf->send_str, inet_ntoa(addr), inet_ntoa(addr), inet_ntoa(addr), inet_ntoa(addr));
 		}
 
 		bufferevent_set_timeouts(bev, &tv, &tv);

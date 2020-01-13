@@ -13,24 +13,24 @@
 
 struct config {
 	uint16_t port;
-	int current_running;
 	int connect_timeout;
 	int read_timeout;
 	int max_concurrent;
-	struct event_base *base;
-	struct bufferevent *stdin_bev;
 	int stdin_closed;
 	char *search_string;
 	int search;
 	int format;
 	char *send_str;
 	long send_str_size;
+	int current_running;
+	struct event_base *base;
+        struct bufferevent *stdin_bev;
 
 	struct stats_st {
-		int found;
 		int init_connected_hosts;
 		int connected_hosts;
 		int completed_hosts;
+		int found;
 	} stats;
 };
 
@@ -43,7 +43,7 @@ struct state {
 	enum {CONNECTING, CONNECTED} state;
 };
 
-void stdin_readcb(struct bufferevent *bev, void *arg);
+void stdin_read_callback(struct bufferevent *bev, void *arg);
 
 void print_status(evutil_socket_t fd, short events, void *arg) {
 	struct event *ev;
@@ -66,13 +66,12 @@ void print_status(evutil_socket_t fd, short events, void *arg) {
 	}
 }
 
-void decrement_cur_running(struct state *st) {
-	log_info("debug", "In decrement function");
+void decrement_running(struct state *st) {
 	struct config *conf = st->conf;
 	conf->current_running--;
 
 	if (evbuffer_get_length(bufferevent_get_input(conf->stdin_bev)) > 0) {
-		stdin_readcb(conf->stdin_bev, conf);
+		stdin_read_callback(conf->stdin_bev, conf);
 	}
 
 	if(st->response != NULL) {
@@ -88,8 +87,7 @@ void decrement_cur_running(struct state *st) {
 	}
 }
 
-void connect_cb(struct bufferevent *bev, short events, void *arg) {
-	log_info("debug", "In event callback");
+void event_callback(struct bufferevent *bev, short events, void *arg) {
 	struct state *st = arg;
 	struct config *conf = st->conf;
 	struct in_addr addr;
@@ -131,12 +129,11 @@ void connect_cb(struct bufferevent *bev, short events, void *arg) {
 		}
 		st->conf->stats.completed_hosts++;
 		bufferevent_free(bev);
-		decrement_cur_running(st);
+		decrement_running(st);
 	}
 }
 
-void read_cb(struct bufferevent *bev, void *arg) {
-	log_info("debug", "In read callback");
+void read_callback(struct bufferevent *bev, void *arg) {
 	struct evbuffer *in = bufferevent_get_input(bev);
 	struct state *st = arg;
 	size_t len = evbuffer_get_length(in);
@@ -165,7 +162,6 @@ void read_cb(struct bufferevent *bev, void *arg) {
 }
 
 void grab_banner(struct state *st) {
-	log_info("debug", "In grab_banner function");
 	struct sockaddr_in addr;
 	struct bufferevent *bev;
 	struct timeval read_to = {st->conf->connect_timeout, 0};
@@ -178,7 +174,7 @@ void grab_banner(struct state *st) {
 
 	bufferevent_set_timeouts(bev, &read_to, &read_to);
 
-	bufferevent_setcb(bev, read_cb, NULL, connect_cb, st);
+	bufferevent_setcb(bev, read_callback, NULL, event_callback, st);
 	bufferevent_enable(bev, EV_READ);
 	st->state = CONNECTING;
 
@@ -190,11 +186,11 @@ void grab_banner(struct state *st) {
 		perror("connect");
 
 		bufferevent_free(bev);
-		decrement_cur_running(st);
+		decrement_running(st);
 	}
 }
 
-void stdin_eventcb(struct bufferevent *bev, short events, void *ptr) {
+void stdin_event_callback(struct bufferevent *bev, short events, void *ptr) {
 	struct config *conf = ptr;
 
 	if (events & BEV_EVENT_EOF) {
@@ -207,7 +203,7 @@ void stdin_eventcb(struct bufferevent *bev, short events, void *ptr) {
 	}
 }
 
-void stdin_readcb(struct bufferevent *bev, void *arg) {
+void stdin_read_callback(struct bufferevent *bev, void *arg) {
 	struct evbuffer *in = bufferevent_get_input(bev);
 	struct config *conf = arg;
 
@@ -269,7 +265,7 @@ int main(int argc, char *argv[]) {
 	conf.base = base;
 
 	conf.stdin_bev = bufferevent_socket_new(base, 0, BEV_OPT_DEFER_CALLBACKS);
-	bufferevent_setcb(conf.stdin_bev, stdin_readcb, NULL, stdin_eventcb, &conf);
+	bufferevent_setcb(conf.stdin_bev, stdin_read_callback, NULL, stdin_event_callback, &conf);
 	bufferevent_enable(conf.stdin_bev, EV_READ);
 
 	status_timer = evtimer_new(base, print_status, &conf);

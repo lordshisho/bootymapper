@@ -176,14 +176,11 @@ void grab_banner(struct state *st) {
 
 	bufferevent_setcb(bev, read_cb, NULL, connect_cb, st);
 	bufferevent_enable(bev, EV_READ);
-	st->response = NULL;
-	st->response_length = 0;
 	st->state = CONNECTING;
 
 	st->conf->stats.init_connected_hosts++;
 
-	if (bufferevent_socket_connect(bev,
-		(struct sockaddr *)&addr, sizeof(addr)) < 0) {
+	if (bufferevent_socket_connect(bev, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 		log_warn("bootymapper", "Could not connect on socket %d (%d are open) %d %d",
 			bufferevent_getfd(bev), st->conf->current_running, errno, ENFILE);
 		perror("connect");
@@ -210,8 +207,7 @@ void stdin_readcb(struct bufferevent *bev, void *arg) {
 	struct evbuffer *in = bufferevent_get_input(bev);
 	struct config *conf = arg;
 
-	while (conf->current_running < conf->max_concurrent &&
-		   evbuffer_get_length(in) > 0) {
+	while (conf->current_running < conf->max_concurrent && evbuffer_get_length(in) > 0) {
 		char *ip_str;
 		size_t line_len;
 		char *line = evbuffer_readln(in, &line_len, EVBUFFER_EOL_LF);
@@ -225,6 +221,8 @@ void stdin_readcb(struct bufferevent *bev, void *arg) {
 		conf->current_running++;
 		st = malloc(sizeof(*st));
 		st->conf = conf;
+		st->response = NULL;
+        	st->response_length = 0;
 		st->ip = inet_addr(ip_str);
 		grab_banner(st);
 	}
@@ -244,7 +242,9 @@ int main(int argc, char *argv[]) {
 		{"data", required_argument, 0, 'd'},
 		{"search-string", required_argument, 0, 's'},
 		{"format", required_argument, 0, 'f'},
-		{0, 0, 0, 0} };
+		{0, 0, 0, 0}
+
+	};
 
 	struct config conf;
 	int ret;

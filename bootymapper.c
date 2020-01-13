@@ -16,6 +16,7 @@ struct config {
 	int connect_timeout;
 	int read_timeout;
 	int max_concurrent;
+	int max_read_size;
 	int stdin_closed;
 	char *search_string;
 	int search;
@@ -137,17 +138,45 @@ void read_callback(struct bufferevent *bev, void *arg) {
 	struct evbuffer *in = bufferevent_get_input(bev);
 	struct state *st = arg;
 	size_t len = evbuffer_get_length(in);
+	struct in_addr addr;
+        addr.s_addr = st->ip;
+
+	char *buf = malloc(len+1);
+	evbuffer_remove(in, buf, len);
+
+	if(st->response_length >= st->conf->max_read_size) {
+		st->response[st->response_length] = '\0';
+
+		if(st->conf->search == 1 && strstr(st->response, st->conf->search_string) != NULL) {
+			if(st->conf->format == 1) {
+				printf("%s\n", inet_ntoa(addr));
+			} else {
+				printf("%s ", inet_ntoa(addr));
+				printf("%s\n", st->response);
+			}
+				st->conf->stats.found++;
+		} else if(st->conf->search == 0) {
+			if(st->conf->format == 1) {
+				printf("%s\n", inet_ntoa(addr));
+			} else {
+				printf("%s ", inet_ntoa(addr));
+				printf("%s\n", st->response);
+			}
+		}
+		fflush(stdout);
+		free(buf);
+		bufferevent_free(bev);
+		decrement_running(st);
+		return;
+	}
 
 	if (len > 0) {
-
-		char *buf = malloc(len+1);
 
 		if (!buf) {
 			log_fatal("bootymapper", "Cannot allocate buffer of length %d for received data", len+1);
 			return;
 		}
 
-		evbuffer_remove(in, buf, len);
 		char *ptr;
 		ptr = realloc(st->response, st->response_length+len+1);
 		if(ptr == NULL) {
@@ -157,8 +186,9 @@ void read_callback(struct bufferevent *bev, void *arg) {
 		memcpy(st->response + st->response_length, buf, len);
 		st->response_length += len;
 		fflush(stdout);
-		free(buf);
 	}
+
+	free(buf);
 }
 
 void grab_banner(struct state *st) {
@@ -237,12 +267,13 @@ int main(int argc, char *argv[]) {
 	struct option long_options[] = {
 		{"concurrent", required_argument, 0, 'c'},
 		{"port", required_argument, 0, 'p'},
-		{"conn-timeout", required_argument, 0, 't'},
+		{"connect-timeout", required_argument, 0, 't'},
 		{"read-timeout", required_argument, 0, 'r'},
 		{"verbosity", required_argument, 0, 'v'},
-		{"data", required_argument, 0, 'd'},
+		{"request", required_argument, 0, 'd'},
 		{"search-string", required_argument, 0, 's'},
 		{"format", required_argument, 0, 'f'},
+		{"max-read-size", required_argument, 0, 'm'},
 		{0, 0, 0, 0}
 
 	};

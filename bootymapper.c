@@ -28,10 +28,10 @@ struct config {
         struct bufferevent *stdin_bev;
 
 	struct stats_st {
-		int init_connected_hosts;
-		int connected_hosts;
-		int completed_hosts;
-		int found;
+		unsigned int init_connected_hosts;
+		unsigned int connected_hosts;
+		unsigned int completed_hosts;
+		unsigned int found;
 	} stats;
 };
 
@@ -55,13 +55,12 @@ void print_status(evutil_socket_t fd, short events, void *arg) {
 	evtimer_add(ev, &status_timeout);
 	(void)fd; (void)events;
 
-
 	if(conf->search == 1) {
 	log_info("bootymapper", "(%d/%d descriptors in use) - %d found containing \"%s\", %d inititiated, %d connected, %d completed",
 			conf->current_running, conf->max_concurrent, conf->stats.found, conf->search_string,
 			conf->stats.init_connected_hosts, conf->stats.connected_hosts, conf->stats.completed_hosts);
 	} else {
-	log_info("bootymapper", "(%d/%d descriptors in use) - %d inititiated, %d connected, %d completed",
+	log_info("bootymapper", "(%d/%d descriptors in use) - %d found, %d inititiated, %d connected, %d completed",
                         conf->current_running, conf->max_concurrent, conf->stats.init_connected_hosts,
 			conf->stats.connected_hosts, conf->stats.completed_hosts);
 	}
@@ -73,6 +72,8 @@ void decrement_running(struct state *st) {
 	if(st->response != NULL) {
                 free(st->response);
         }
+
+	st->conf->stats.completed_hosts++;
 
 	free(st);
 
@@ -106,7 +107,9 @@ void event_callback(struct bufferevent *bev, short events, void *arg) {
 
 		st->state = CONNECTED;
 		st->conf->stats.connected_hosts++;
+
 	} else {
+
 		if(st->response != NULL) {
 
 			st->response[st->response_length] = '\0';
@@ -124,9 +127,9 @@ void event_callback(struct bufferevent *bev, short events, void *arg) {
 				} else {
                                 	printf("%s %s\n\n", inet_ntoa(addr), st->response);
                 	        }
+				st->conf->stats.found++;
 			}
 		}
-		st->conf->stats.completed_hosts++;
 		bufferevent_free(bev);
 		decrement_running(st);
 	}
@@ -152,13 +155,14 @@ void read_callback(struct bufferevent *bev, void *arg) {
 			} else {
 				printf("%s %s\n\n", inet_ntoa(addr), st->response);
 			}
-				st->conf->stats.found++;
+			st->conf->stats.found++;
 		} else if(st->conf->search == 0) {
 			if(st->conf->format == 1) {
 				printf("%s\n", inet_ntoa(addr));
 			} else {
 				printf("%s %s\n\n", inet_ntoa(addr), st->response);
 			}
+			st->conf->stats.found++;
 		}
 		fflush(stdout);
 		free(buf);

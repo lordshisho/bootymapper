@@ -35,7 +35,6 @@ struct config {
 	} stats;
 };
 
-
 struct state {
 	struct config *conf;
 	uint32_t ip;

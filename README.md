@@ -16,11 +16,13 @@ Be your own Shodan. Be your own Censys. Map the Internet and find the booty.
 
 `-v` increases the verbosity level of bootymapper. Any informative messages are not printed to stdout.
 
-`-d` sets the data file that bootymapper will send on a successful connection. A basic HTTP request is included in `request`. This is required.
-
 `-s` sets the string bootymapper will search for. The default is to not search for anything and return all responses.
 
 `-f` allows you to set the output to the resulting IP or the IP and the contents of a response. The default is to print IP and contents.
+
+`-p` sets the destination port where the request is sent. This is required.
+
+`-d` sets the data file that bootymapper will send on a successful connection. A basic HTTP request is included in `request`. This is required.
 
 `-m` sets the max read size of a single socket. The default is 1 megabyte or 1048576 bytes.
 

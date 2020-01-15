@@ -55,12 +55,12 @@ void print_status(evutil_socket_t fd, short events, void *arg) {
 	(void)fd; (void)events;
 
 	if(conf->search == 1) {
-	log_info("bootymapper", "(%d/%d descriptors in use) - %d found containing \"%s\", %d inititiated, %d connected, %d completed",
+	log_info("bootymapper", "(%d/%d descriptors in use) - %u found containing \"%s\", %u inititiated, %u connected, %u completed",
 			conf->current_running, conf->max_concurrent, conf->stats.found, conf->search_string,
 			conf->stats.init_connected_hosts, conf->stats.connected_hosts, conf->stats.completed_hosts);
 	} else {
-	log_info("bootymapper", "(%d/%d descriptors in use) - %d found, %d inititiated, %d connected, %d completed",
-                        conf->current_running, conf->max_concurrent, conf->stats.init_connected_hosts,
+	log_info("bootymapper", "(%d/%d descriptors in use) - %u found, %u inititiated, %u connected, %u completed",
+                        conf->current_running, conf->max_concurrent, conf->stats.found, conf->stats.init_connected_hosts,
 			conf->stats.connected_hosts, conf->stats.completed_hosts);
 	}
 }

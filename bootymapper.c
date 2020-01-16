@@ -115,16 +115,16 @@ void event_callback(struct bufferevent *bev, short events, void *arg) {
 
 			if(st->conf->search == 1 && strstr(st->response, st->conf->search_string) != NULL) {
 				if(st->conf->format == 1) {
-					printf("%s\n", inet_ntoa(addr));
+					printf("%s:%u\n", inet_ntoa(addr), st->conf->port);
 				} else {
-					printf("%s %s\n\n", inet_ntoa(addr), st->response);
+					printf("%s:%u %s\n\n", inet_ntoa(addr), st->conf->port, st->response);
 				}
 				st->conf->stats.found++;
 			} else if(st->conf->search == 0) {
 				if(st->conf->format == 1) {
-                                	printf("%s\n", inet_ntoa(addr));
+                                	printf("%s:%u\n", inet_ntoa(addr), st->conf->port);
 				} else {
-                                	printf("%s %s\n\n", inet_ntoa(addr), st->response);
+                                	printf("%s:%u %s\n\n", inet_ntoa(addr), st->conf->port, st->response);
                 	        }
 				st->conf->stats.found++;
 			}
@@ -150,16 +150,16 @@ void read_callback(struct bufferevent *bev, void *arg) {
 
 		if(st->conf->search == 1 && strstr(st->response, st->conf->search_string) != NULL) {
 			if(st->conf->format == 1) {
-				printf("%s\n", inet_ntoa(addr));
+				printf("%s:%u\n", inet_ntoa(addr), st->conf->port);
 			} else {
-				printf("%s %s\n\n", inet_ntoa(addr), st->response);
+				printf("%s:%u %s\n\n", inet_ntoa(addr), st->conf->port, st->response);
 			}
 			st->conf->stats.found++;
 		} else if(st->conf->search == 0) {
 			if(st->conf->format == 1) {
-				printf("%s\n", inet_ntoa(addr));
+				printf("%s:%u\n", inet_ntoa(addr), st->conf->port);
 			} else {
-				printf("%s %s\n\n", inet_ntoa(addr), st->response);
+				printf("%s:%u %s\n\n", inet_ntoa(addr), st->conf->port, st->response);
 			}
 			st->conf->stats.found++;
 		}

@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <ulimit.h>
 #include <ctype.h>
+#include <regex.h>
 
 struct config {
 	uint16_t port;
@@ -20,6 +21,7 @@ struct config {
 	int stdin_closed;
 	char *search_string;
 	int search;
+	regex_t regex;
 	int format;
 	char *send_str;
 	long send_str_size;
@@ -113,7 +115,7 @@ void event_callback(struct bufferevent *bev, short events, void *arg) {
 
 			st->response[st->response_length] = '\0';
 
-			if(st->conf->search == 1 && strstr(st->response, st->conf->search_string) != NULL) {
+			if(st->conf->search == 1 && regexec(&conf->regex, st->response, 0, NULL, 0) == 0) {
 				if(st->conf->format == 1) {
 					printf("%s:%u\n", inet_ntoa(addr), st->conf->port);
 				} else {
@@ -364,6 +366,7 @@ int main(int argc, char *argv[]) {
 			conf.search = 1;
 			conf.search_string = malloc(strlen(optarg) + 1);
 			strcpy(conf.search_string, optarg);
+			regcomp(&conf.regex, conf.search_string, 0);
 			break;
 		case 'f':
 			if(strstr(optarg, "ip_only") != NULL) {

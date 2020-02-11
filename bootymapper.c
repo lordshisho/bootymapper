@@ -20,6 +20,8 @@ struct config {
 	int max_read_size;
 	int stdin_closed;
 	char *pattern;
+	int caseIgnore;
+	int extendedRegex;
 	int search;
 	regex_t regex;
 	int format;
@@ -115,7 +117,7 @@ void event_callback(struct bufferevent *bev, short events, void *arg) {
 
 			st->response[st->response_length] = '\0';
 
-			if(st->conf->search == 1 && regexec(&conf->regex, st->response, 1, NULL, 0) == 0) {
+			if(st->conf->search == 1 && regexec(&conf->regex, st->response, 0, NULL, 0) == 0) {
 				if(st->conf->format == 1) {
 					printf("%s:%u\n", inet_ntoa(addr), st->conf->port);
 				} else {
@@ -317,7 +319,7 @@ int main(int argc, char *argv[]) {
 
 	while (1) {
 		int option_index = 0;
-		c = getopt_long(argc, argv, "c:p:t:r:v:d:s:f:m:",
+		c = getopt_long(argc, argv, "c:p:t:r:v:d:ixs:f:m:",
 				long_options, &option_index);
 
 		if (c < 0) {
@@ -362,11 +364,16 @@ int main(int argc, char *argv[]) {
 			conf.send_str[conf.send_str_size] = '\0';
 			fclose(fp);
 			break;
+		case 'i':
+			conf.caseIgnore = 1;
+			break;
+		case 'x':
+			conf.extendedRegex = 1;
+			break;
 		case 's':
 			conf.search = 1;
 			conf.pattern = malloc(strlen(optarg) + 1);
 			strcpy(conf.pattern, optarg);
-			regcomp(&conf.regex, conf.pattern, 0);
 			break;
 		case 'f':
 			if(strstr(optarg, "ip_only") != NULL) {
@@ -378,11 +385,35 @@ int main(int argc, char *argv[]) {
 			break;
 		case '?':
 			printf("Usage: %s [-c max_concurrent_sockets] [-t connection_timeout] [-r read_timeout] "
-				   "[-v verbosity=0-5] [-d send_data] [-s \"pattern\"] [-f ip_only] -m max_read_size -p port\n", argv[0]);
+				   "[-v verbosity=0-5] [-d send_data] [-s \"pattern\"] [-i] [-x] [-f ip_only] [-m max_read_size] -p port\n", argv[0]);
 			exit(1);
 		default:
 			break;
 		}
+	}
+
+	if(conf.search == 1) {
+		if(conf.caseIgnore != 1 && conf.extendedRegex != 1) {
+			if(regcomp(&conf.regex, conf.pattern, 0) != 0) {
+				log_fatal("bootymapper", "Failed to set up search pattern. Check your pattern.");
+				exit(0);
+			}
+		} else if(conf.caseIgnore == 1 && conf.extendedRegex != 1) {
+			if(regcomp(&conf.regex, conf.pattern, REG_ICASE) != 0) {
+				log_fatal("bootymapper", "Failed to set up search pattern. Check your pattern.");
+				exit(0);
+			}
+		} else if(conf.caseIgnore != 1 && conf.extendedRegex == 1) {
+			if(regcomp(&conf.regex, conf.pattern, REG_EXTENDED) != 0) {
+				log_fatal("bootymapper", "Failed to set up search pattern. Check your pattern.");
+				exit(0);
+			}
+		} else if(conf.caseIgnore == 1 && conf.extendedRegex == 1) {
+			if(regcomp(&conf.regex, conf.pattern, REG_EXTENDED|REG_ICASE) != 0) {
+				log_fatal("bootymapper", "Failed to set up search pattern. Check your pattern.");
+				exit(0);
+			}
+        	}
 	}
 
 	log_info("bootymapper", "Scanning port %d, %d max descriptors, %d second connection timeout, %d second read timeout",

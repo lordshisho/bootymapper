@@ -16,7 +16,7 @@ Be your own Shodan. Be your own Censys. Map the Internet and find the booty.
 
 `-v` increases the verbosity level of bootymapper. Any informative messages are not printed to stdout.
 
-`-s` sets the string bootymapper will search for. The default is to not search for anything and return all responses.
+`-s` sets the regex pattern bootymapper will try and match for. The default is to not match anything and return all responses.
 
 `-f` allows you to set the output to the resulting IP or the IP and the contents of a response. The default is to print IP and contents.
 

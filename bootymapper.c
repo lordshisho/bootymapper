@@ -19,7 +19,7 @@ struct config {
 	int max_concurrent;
 	int max_read_size;
 	int stdin_closed;
-	char *search_string;
+	char *pattern;
 	int search;
 	regex_t regex;
 	int format;
@@ -58,7 +58,7 @@ void print_status(evutil_socket_t fd, short events, void *arg) {
 
 	if(conf->search == 1) {
 	log_info("bootymapper", "(%d/%d descriptors in use) - %u found matching pattern \"%s\", %u inititiated, %u connected, %u completed",
-			conf->current_running, conf->max_concurrent, conf->stats.found, conf->search_string,
+			conf->current_running, conf->max_concurrent, conf->stats.found, conf->pattern,
 			conf->stats.init_connected_hosts, conf->stats.connected_hosts, conf->stats.completed_hosts);
 	} else {
 	log_info("bootymapper", "(%d/%d descriptors in use) - %u found, %u inititiated, %u connected, %u completed",
@@ -150,7 +150,7 @@ void read_callback(struct bufferevent *bev, void *arg) {
 
 		st->response[st->response_length] = '\0';
 
-		if(st->conf->search == 1 && strstr(st->response, st->conf->search_string) != NULL) {
+		if(st->conf->search == 1 && strstr(st->response, st->conf->pattern) != NULL) {
 			if(st->conf->format == 1) {
 				printf("%s:%u\n", inet_ntoa(addr), st->conf->port);
 			} else {
@@ -306,7 +306,7 @@ int main(int argc, char *argv[]) {
 
 	conf.max_read_size = 1048576;
 	conf.search = 0;
-	conf.search_string = NULL;
+	conf.pattern = NULL;
 	conf.max_concurrent = 10000;
 	conf.current_running = 0;
 	memset(&conf.stats, 0, sizeof(conf.stats));
@@ -364,9 +364,9 @@ int main(int argc, char *argv[]) {
 			break;
 		case 's':
 			conf.search = 1;
-			conf.search_string = malloc(strlen(optarg) + 1);
-			strcpy(conf.search_string, optarg);
-			regcomp(&conf.regex, conf.search_string, 0);
+			conf.pattern = malloc(strlen(optarg) + 1);
+			strcpy(conf.pattern, optarg);
+			regcomp(&conf.regex, conf.pattern, 0);
 			break;
 		case 'f':
 			if(strstr(optarg, "ip_only") != NULL) {
@@ -378,7 +378,7 @@ int main(int argc, char *argv[]) {
 			break;
 		case '?':
 			printf("Usage: %s [-c max_concurrent_sockets] [-t connection_timeout] [-r read_timeout] "
-				   "[-v verbosity=0-5] [-d send_data] [-s \"search_string\"] [-f ip_only] -m max_read_size -p port\n", argv[0]);
+				   "[-v verbosity=0-5] [-d send_data] [-s \"pattern\"] [-f ip_only] -m max_read_size -p port\n", argv[0]);
 			exit(1);
 		default:
 			break;

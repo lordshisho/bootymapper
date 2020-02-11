@@ -6,7 +6,7 @@ Be your own Shodan. Be your own Censys. Map the Internet and find the booty.
 
 ### Usage and Arguments
 
-`Usage: ./bootymapper [-c max_concurrent_sockets] [-t connection_timeout] [-r read_timeout] [-v verbosity=0-5] [-s "search_string"] [-f ip_only] -p port -d request -m max_read_size`
+`Usage: ./bootymapper [-c max_concurrent_sockets] [-t connection_timeout] [-r read_timeout] [-v verbosity=0-5] [-s "search_string"] [-i] [-x] [-f ip_only] -p port -d request -m max_read_size`
 
 `-c` sets the maximum number of concurrent sockets that can be active at any one time. You should use `ulimit -n` to raise the default kernel limit of 1024. The default is 10000.
 

@@ -1,6 +1,6 @@
 # bootymapper
 
-Solution used to grab banners from TCP services and search their contents for a specific string.
+Tool used to grab banners from TCP services and search their contents for a specific string really fast.
 
 Be your own Shodan. Be your own Censys. Map the Internet and find the booty.
 
@@ -17,6 +17,10 @@ Be your own Shodan. Be your own Censys. Map the Internet and find the booty.
 `-v` increases the verbosity level of bootymapper. Any informative messages are not printed to stdout.
 
 `-s` sets the regex pattern bootymapper will try and match for. The default is to not match anything and return all responses.
+
+'-i' sets the regex match to ignore cases. The default is to not ignore cases.
+
+'-x' sets the regex to extended. The default is not extended.
 
 `-f` allows you to set the output to the resulting IP or the IP and the contents of a response. The default is to print IP and contents.
 

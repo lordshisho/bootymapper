@@ -115,7 +115,7 @@ void event_callback(struct bufferevent *bev, short events, void *arg) {
 
 			st->response[st->response_length] = '\0';
 
-			if(st->conf->search == 1 && regexec(&conf->regex, st->response, 0, NULL, 0) == 0) {
+			if(st->conf->search == 1 && regexec(&conf->regex, st->response, 1, NULL, 0) == 0) {
 				if(st->conf->format == 1) {
 					printf("%s:%u\n", inet_ntoa(addr), st->conf->port);
 				} else {

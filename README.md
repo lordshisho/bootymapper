@@ -32,7 +32,7 @@ Be your own Shodan. Be your own Censys. Map the Internet and find the booty.
 
 ### Installation and Compilation
 
-You may need to compile and install libevent from source to update it to the latest version. You can find the latest libevent on https://github.com/libevent/libevent
+You may need to compile and install libevent from source to get the latest version. You can find the latest libevent on https://github.com/libevent/libevent
 
 Use `cd bootymapper && make` to compile bootymapper.
 
@@ -40,7 +40,7 @@ Use `cd bootymapper && make` to compile bootymapper.
 
 IPv4 addresses can be generated with zmap or your preferred network mapper and piped directly into bootymapper.
 
-For example, use `zmap -p 80 | ./bootymapper -d ./request -p 80 -s "<title>Test Title, Please Ignore</title>" -m 100000 > test.txt` to scan port 80 with zmap and simultaneously grab all banners and search them for the specified string which includes title tags up to a max read size of 100000 bytes writing the resulting IP and contents to test.txt if the string is found.
+For example, use `zmap -p 80 | ./bootymapper -d ./request -p 80 -s "<title>Test Title, Please Ignore</title>" > test.txt` to scan port 80 with zmap and simultaneously grab all banners and search them for the specified pattern which includes title tags, writing the resulting IP and contents to test.txt if the string is found.
 
 `request` contains the raw request which will be sent by bootymapper. For HTTP, this can be generated with echo: `echo -e "GET / HTTP/1.1\r\nHost: %s\r\n\r\n" > request`. bootymapper supports requests of all shapes and sizes.
 
